@@ -1,0 +1,38 @@
+samples:
+  - metadata:
+      id: Sample
+      kmer_size: 21
+      ploidy: 1
+      # Organism domain: either euk or prok
+      organism_domain: prok
+      taxid: "1423" 
+      busco_lineages:
+        # - "fungi_odb10"
+        - "bacillales_odb10"
+    assembly:
+      - id: AssemblerA
+        # pri_asm: "https://raw.githubusercontent.com/rodtheo/snakemake_pipelines/master/evaluate_assemblies/dataset/assembly.fa"
+        pri_asm: "./data/samples/bsubtilis_pb.fasta"
+        # pri_gfa: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/gfa/assembly.gfa"
+        # alt_asm: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome2.fasta"
+        # alt_gfa: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/gfa/assembly.gfa"
+      - id: AssemblerB
+        pri_asm: "./data/samples/bsubtilis_pb_B.fasta"
+    illumina:
+      - read1: "./data/samples/sample1_bs_R1.fastq.gz"
+        read2: "./data/samples/sample1_bs_R2.fastq.gz"
+  # - metadata:
+  #     id: HSapiensB
+  #     kmer_size: 21
+  #     ploidy: 2
+  #   # ont:
+  #   #   - reads: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/nanopore/fastq/test.fastq.gz"
+  #   illumina:
+  #     - read1: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz"
+  #       read2: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_2.fastq.gz"
+  #     - reads: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz"
+  #   rnaseq:
+  #     - read1: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz"
+  #       read2: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_2.fastq.gz"
+tools:
+  # Something here

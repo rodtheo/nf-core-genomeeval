@@ -36,6 +36,13 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
+include { PREPARE_INPUT } from '../subworkflows/local/prepare_input'
+include { READ_MAPPING } from '../subworkflows/local/read_mapping'
+include { CONTIGUITY_ASM } from '../subworkflows/local/contiguity'
+include { COMPLETENESS_ASM } from '../subworkflows/local/completeness'
+include { CORRECTNESS_ASM } from '../subworkflows/local/correctness'
+include { KMER_PROFILE } from '../subworkflows/local/kmerprofile'
+include { CONTAMINATION_ASM } from '../subworkflows/local/contamination'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,6 +56,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 include { FASTQC                      } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
+include { PARSE_RESULTS } from '../modules/local/parse_results'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,21 +74,88 @@ workflow ASSEMBLYEVAL {
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
-    INPUT_CHECK (
-        file(params.input)
+    PREPARE_INPUT (
+        Channel.fromPath(params.input)
     )
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    
+    ch_versions = ch_versions.mix(PREPARE_INPUT.out.versions)
     // TODO: OPTIONAL, you can use nf-validation plugin to create an input channel from the samplesheet with Channel.fromSamplesheet("input")
     // See the documentation https://nextflow-io.github.io/nf-validation/samplesheets/fromSamplesheet/
     // ! There is currently no tooling to help you write a sample sheet schema
+
+    illumina_ch = PREPARE_INPUT.out.illumina
+    // illumina_ch.view()
 
     //
     // MODULE: Run FastQC
     //
     FASTQC (
-        INPUT_CHECK.out.reads
+        illumina_ch
     )
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+     
+
+    //
+    // MODULE: Contamination
+    //
+    CONTAMINATION_ASM( illumina_ch, PREPARE_INPUT.out.assemblies )
+
+    //
+    // MODULE: Completeness Metrics
+    //
+    COMPLETENESS_ASM (
+        illumina_ch, PREPARE_INPUT.out.assemblies
+    )
+
+    // MODULE: Contiguity Metrics
+    //
+    CONTIGUITY_ASM (
+        PREPARE_INPUT.out.assemblies
+    )
+
+    //
+    // MODULE: Correctness Metrics
+    //
+    // SUB-MODULE: Mapping reads
+    //
+    READ_MAPPING (
+        illumina_ch, PREPARE_INPUT.out.assemblies
+    )
+
+    // READ_MAPPING.out.bam.view{ "*** ETAPA 2 - BAM: $it"}
+    // READ_MAPPING.out.bai.view{ "*** ETAPA 2 - BAI: $it"}
+
+    
+    CORRECTNESS_ASM (
+        READ_MAPPING.out.asm, READ_MAPPING.out.bam, READ_MAPPING.out.bai
+    )
+
+    KMER_PROFILE (
+        illumina_ch, PREPARE_INPUT.out.assemblies
+    )
+
+    // PREPARE_INPUT.out.assemblies.view{ "ASSEMBLIES: $it" }
+    // parse_results_to_table(args.genomes_ids, args.ale_res, args.reapr_res, args.busco_re_summary, args.quast_res, args.file_out)
+    
+    out_asm_ch = CORRECTNESS_ASM.out.reapr.map{ meta, reapr -> meta['id'] }.collect( sort: true ).view{ "ASSEMBLIES: $it" }
+    out_ale_ch = CORRECTNESS_ASM.out.ale.toSortedList( { a, b -> a[0]['id'] <=> b[0]['id'] } ).flatMap().collect{ it[1] }
+    out_reapr_ch = CORRECTNESS_ASM.out.reapr.toSortedList( { a, b -> a[0]['id'] <=> b[0]['id'] } ).flatMap().collect{ it[1] }
+    out_busco_re_summary_ch = COMPLETENESS_ASM.out.busco_short_summaries_txt.toSortedList( { a, b -> a[0]['id'] <=> b[0]['id'] } ).flatMap().collect{ it[1] }
+    out_quast_ch = CONTIGUITY_ASM.out.quast_tsv.toSortedList( { a, b -> a[0]['id'] <=> b[0]['id'] } ).flatMap().collect{ it[1] }
+    out_merfin_qv_ch = KMER_PROFILE.out.merfin_logs.toSortedList( { a, b -> a[0]['id'] <=> b[0]['id'] } ).flatMap().collect{ it[1] }
+    out_merfin_completeness_ch = KMER_PROFILE.out.merfin_completeness.toSortedList( { a, b -> a[0]['id'] <=> b[0]['id'] } ).flatMap().collect{ it[1] }
+
+    // out_table_ch = Channel.fromPath("out_table.csv")
+    
+    COMPLETENESS_ASM.out.busco_short_summaries_txt.view{ "REAPR: $it" }
+    
+    PARSE_RESULTS ( out_asm_ch, out_ale_ch, out_reapr_ch, out_busco_re_summary_ch, out_quast_ch, out_merfin_qv_ch, out_merfin_completeness_ch  )
+
+    // // CORRECTNESS_ASM.out.reapr.collect( {it[1]}, sort: {it.getName()} ).set{ new_collect }
+    
+
+    // ch_versions = ch_versions.mix(FASTQC.out.versions.first()).mix(CONTIGUITY_ASM.out.versions.first())
+
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
@@ -100,6 +175,16 @@ workflow ASSEMBLYEVAL {
     ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(CONTIGUITY_ASM.out.quast.collect{it[1]}.ifEmpty([]))
+    if ( params.busco ) {
+        ch_multiqc_files = ch_multiqc_files.mix(COMPLETENESS_ASM.out.busco_short_summaries_txt.collect{it[1]}.ifEmpty([]))
+    }
+    ch_multiqc_files = ch_multiqc_files.mix( PARSE_RESULTS.out.res.collect{it[1]}.ifEmpty([]))
+
+
+    // ch_multiqc_files.collect().view{ "QUAST_TSV: $it" }
+
+    ch_multiqc_custom_config.mix( Channel.fromPath("./assets/section_name_with_slash.yml")).set{ ch_multiqc_custom_config }
 
     MULTIQC (
         ch_multiqc_files.collect(),
