@@ -3,9 +3,12 @@ process ALE {
     label 'process_medium'
 
     // conda "${moduleDir}/environment.yml"
+    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    //     'https://depot.galaxyproject.org/singularity/busco:5.5.0--pyhdfd78af_0':
+    //     'rodtheo_genomics:eval_assem_ale_reapr' }"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/busco:5.5.0--pyhdfd78af_0':
-        'rodtheo_genomics:eval_assem_ale_reapr' }"
+        'https://depot.galaxyproject.org/singularity/ale:20180904--py27ha92aebf_0':
+        'biocontainers/ale:20180904--py27ha92aebf_0' }"
 
     input:
     tuple val(meta_asm), path(asm)        // Required:    One genome assembly to evaluate

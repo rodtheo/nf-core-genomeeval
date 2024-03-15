@@ -202,6 +202,22 @@ workflow ASSEMBLYEVAL {
 */
 
 workflow.onComplete {
+
+    def msg = """\
+        Pipeline execution summary
+        ---------------------------
+        Completed at: ${workflow.complete}
+        Duration    : ${workflow.duration}
+        Success     : ${workflow.success}
+        workDir     : ${workflow.workDir}
+        exit status : ${workflow.exitStatus}
+        """
+        .stripIndent()
+        
+    sendMail(to: 'theodoro.biotec@gmail.com', from: 'theodoro.biotec@gmail.com', subject: 'My pipeline execution', body: msg)
+}
+
+workflow.onComplete {
     if (params.email || params.email_on_fail) {
         NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
     }

@@ -1,11 +1,16 @@
 process REAPR {
     tag "$meta.id"
-    label 'process_high'
+    label 'process_medium'
 
     // conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/busco:5.5.0--pyhdfd78af_0':
         'rodtheo_genomics:eval_assem_ale_reapr' }"
+
+    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    //     'https://depot.galaxyproject.org/singularity/reapr:v1.0.18dfsg-4-deb_cv1':
+    //     'biocontainers/reapr:v1.0.18dfsg-4-deb_cv1' }"
+        
 
     input:
     tuple val(meta_asm), path(asm)        // Required:    One genome assembly to evaluate
