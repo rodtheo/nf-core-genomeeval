@@ -13,7 +13,7 @@
 
 ## Introduction
 
-**nf-core/assemblyeval** is a bioinformatics pipeline that ...
+**nf-core/assemblyeval** is a bioinformatics pipeline that evaluates genome assemblies using metrics grouped into three categories: contiguity, completeness, and correctness, which assess the assembly's structural integrity, gene content, and base accuracy, respectively. It's crucial to curate a genome assembly before releasing it to the public to ensure its accuracy, completeness, and reliability, which are essential for downstream analyses and interpretations, ultimately advancing scientific understanding and applications.
 
 <!-- TODO nf-core:
    Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
@@ -26,7 +26,16 @@
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+2. Completeness Sub-workflow
+   - QUAST
+   - BUSCO or COMPLEASM
+3. Contiguity Sub-workflow
+4. Correctness Sub-workflow
+   - ALE
+   - REAPR
+5. Contamination check
+6. Kmer profile check
+7. Present QC for genomes assemblies ([`MultiQC`](http://multiqc.info/))
 
 ## Usage
 
