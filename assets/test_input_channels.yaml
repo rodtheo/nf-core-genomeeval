@@ -12,15 +12,15 @@ samples:
     assembly:
       - id: AssemblerA
         # pri_asm: "https://raw.githubusercontent.com/rodtheo/snakemake_pipelines/master/evaluate_assemblies/dataset/assembly.fa"
-        pri_asm: "./data/samples/bsubtilis_pb.fasta"
+        pri_asm: "./data/bsubtilis_pb.fasta"
         # pri_gfa: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/gfa/assembly.gfa"
         # alt_asm: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome2.fasta"
         # alt_gfa: "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/gfa/assembly.gfa"
       - id: AssemblerB
-        pri_asm: "./data/samples/bsubtilis_pb_B.fasta"
+        pri_asm: "./data/bsubtilis_illumina.fasta"
     illumina:
-      - read1: "./data/samples/sample1_bs_R1.fastq.gz"
-        read2: "./data/samples/sample1_bs_R2.fastq.gz"
+      - read1: "./data/ERR2935851_1.fastq.gz"
+        read2: "./data/ERR2935851_2.fastq.gz"
   # - metadata:
   #     id: HSapiensB
   #     kmer_size: 21

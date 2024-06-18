@@ -98,7 +98,7 @@ workflow ASSEMBLYEVAL {
     //
     // MODULE: Contamination
     //
-    CONTAMINATION_ASM( illumina_ch, PREPARE_INPUT.out.assemblies )
+    // CONTAMINATION_ASM( illumina_ch, PREPARE_INPUT.out.assemblies )
 
     //
     // MODULE: Completeness Metrics
