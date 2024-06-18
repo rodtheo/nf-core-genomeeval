@@ -1,0 +1,9 @@
+.nextflow.log*
+.nextflow/
+data/*.fasta
+data/*.fastq.gz
+data/*.fastq
+data/*.fq
+data/*.fa
+out_results/
+work/
